@@ -143,7 +143,7 @@ with open( projectDir + '/data-raw/doctors-' + one_fsa + '.csv', 'w' ) as csv_fi
     for key, val in doctors.items():
         writer.writerow( [key, val] )
 """
-# scrape all cities
+# scrape big cities by fsa
 cities = ['fsa_brampton', 'fsa_hamilton', 'fsa_london', 'fsa_mississauga', 'fsa_ottawa']
 
 start_time = time.time()
@@ -177,6 +177,9 @@ for j, city in enumerate(cities):
 
             finally:
                 k += 1
+
+        # blank link for progress bar
+        print()
 
 elapsed_time = time.time() - start_time
 print(time.strftime("-- time elapsed for scrape: %H:%M:%S -- ", time.gmtime(elapsed_time)))
