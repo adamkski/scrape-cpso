@@ -15,6 +15,8 @@ for file in os.listdir(project_dir + "/data-raw"):
 
     file = file.split('.')[0]
 
+    city_name = []
+    fsa = []
     CPSO_num = []
     first_name = []
     last_name = []
@@ -29,6 +31,9 @@ for file in os.listdir(project_dir + "/data-raw"):
         for row in doctors:
             # CPSO num
             CPSO_num.append( row['CPSO'])
+            # metadata
+            city_name.append( row['city_name'])
+            fsa.append( row['fsa'])
 
             soup = BeautifulSoup( row['article'], 'html.parser')
 
@@ -81,6 +86,8 @@ for file in os.listdir(project_dir + "/data-raw"):
                 specialization.append( "" )
 
     clean = pd.DataFrame( {
+        "city_name": city_name,
+        "fsa": fsa,
         "CPSO_num": CPSO_num,
         "first_name": first_name,
         "last_name": last_name,
