@@ -6,24 +6,25 @@ import sys
 import os
 import re
 
-absFilePath = os.path.abspath(__file__)
-fileDir = os.path.dirname(os.path.abspath(__file__))
-projectDir = os.path.dirname(fileDir)
+abs_file_path = os.path.abspath(__file__)
+file_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.dirname(file_dir)
 
 # get list of files to clean
-for file in os.listdir(projectDir + "/data-raw"):
-    if not re.match('doctors', file):
-        break
+for file in os.listdir(project_dir + "/data-raw"):
+
     file = file.split('.')[0]
 
     CPSO_num = []
     first_name = []
     last_name = []
-    location = []
+    address = []
+    phone = []
+    fax = []
     specialization = []
 
-    with open(projectDir + "/data-raw/" + file + ".csv", newline='') as csv_file:
-        doctors = csv.DictReader(csv_file, fieldnames = ['CPSO', 'article'])
+    with open(project_dir + "/data-raw/" + file + ".csv", newline='') as csv_file:
+        doctors = csv.DictReader(csv_file)
 
         for row in doctors:
             # CPSO num
@@ -37,8 +38,40 @@ for file in os.listdir(projectDir + "/data-raw"):
             first_name.append(raw_name[1])
             last_name.append(raw_name[0])
 
-            # location
-            location.append(soup.find('p').get_text(separator=" "))
+            # contact details
+            try:
+                raw_location = soup.find('h4').next_sibling.next_sibling.get_text(separator=" ")
+            except:
+                raw_location = "NA"
+
+            # try parsing in order of most detail to least
+            loc1 = re.search( "(.*?)( Phone\: )(.*?)( Fax\: )(.*)", raw_location )
+            loc2 = re.search( "(.*?)( Phone\: )(.*?)", raw_location )
+            loc3 = re.search( "(.*?)", raw_location )
+
+            loc_keep = ""
+            for loc in [loc1, loc2, loc3]:
+                if loc != None:
+                    loc_keep = loc
+                    break
+
+            # address
+            try:
+                address.append( loc.group(1) )
+            except:
+                address.append( 'NA' )
+
+            # phone
+            try:
+                phone.append( loc.group(3) )
+            except:
+                phone.append( 'NA' )
+
+            # fax
+            try:
+                fax.append( loc.group(5) )
+            except:
+                fax.append( 'NA' )
 
             # specialization
             doc_spec = [tag.next_sibling.next_sibling.text for tag in soup.find_all('h4') if tag.text == "Area(s) of Specialization:"]
@@ -51,9 +84,10 @@ for file in os.listdir(projectDir + "/data-raw"):
         "CPSO_num": CPSO_num,
         "first_name": first_name,
         "last_name": last_name,
-        "location": location,
+        "address": address,
+        "phone": phone,
+        "fax": fax,
         "specialization": specialization
     })
 
-    with open(projectDir + '/data/' + file + '.pickle', 'wb') as f:
-        pickle.dump(clean, f)
+    clean.to_csv( project_dir + '/data-doctors/' + file + '.csv', index = False )
