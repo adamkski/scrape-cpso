@@ -124,7 +124,7 @@ for city_code, city in cities:
         except:
             results[ key ] = 0
 
-    with open( project_dir + '/data/count-spec_' + city + '.csv', 'w' ) as csv_file:
+    with open( project_dir + '/data/count-doc_spec_' + city + '.csv', 'w' ) as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow( [ "city_code", "specialty_code", "num_doctors"] )
         for key, val in results.items():
