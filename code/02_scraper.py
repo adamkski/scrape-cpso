@@ -144,12 +144,12 @@ with open( projectDir + '/data-raw/doctors-' + one_fsa + '.csv', 'w' ) as csv_fi
         writer.writerow( [key, val] )
 """
 # scrape big cities by fsa
-cities = ['fsa_brampton', 'fsa_hamilton', 'fsa_london', 'fsa_mississauga', 'fsa_ottawa']
-
+cities = ['fsa_brampton', 'fsa_hamilton', 'fsa_london', 'fsa_mississauga', 'fsa_ottawa', 'fsa_toronto']
 start_time = time.time()
 
 for j, city in enumerate(cities):
 
+    print()
     print( city, j+1, "of", len(cities) )
 
     with open( projectDir + '/data/' + city + '.pickle', 'rb') as f:
@@ -177,9 +177,6 @@ for j, city in enumerate(cities):
 
             finally:
                 k += 1
-
-        # blank link for progress bar
-        print()
 
 elapsed_time = time.time() - start_time
 print(time.strftime("-- time elapsed for scrape: %H:%M:%S -- ", time.gmtime(elapsed_time)))
