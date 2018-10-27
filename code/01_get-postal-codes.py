@@ -55,7 +55,7 @@ with open(projectDir + '/data/fsa_ottawa.pickle', 'wb') as f:
     pickle.dump(post_code_list, f)
 
 # london
-url = "https://en.wikipedia.org/wiki/List_of_postal_codes_of_Canada:_K"
+url = "https://en.wikipedia.org/wiki/List_of_postal_codes_of_Canada:_N"
 r = requests.get(url)
 soup = BeautifulSoup(r.content, 'html.parser')
 
