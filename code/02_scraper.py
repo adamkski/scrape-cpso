@@ -11,9 +11,9 @@ import os
 url_search = "https://www.cpso.on.ca/Public-Information-Services/Find-a-Doctor?search=general"
 url_paging = "https://www.cpso.on.ca/Public-Register-Info-(1)/Doctor-Search-Results"
 
-absFilePath = os.path.abspath(__file__)
-fileDir = os.path.dirname(os.path.abspath(__file__))
-projectDir = os.path.dirname(fileDir)
+abs_file_path = os.path.abspath(__file__)
+file_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.dirname(file_dir)
 
 # progess bar
 def progress(count, total, status=''):
@@ -138,7 +138,7 @@ def crawl_fsa( fsa ):
 """doctors = {}
 one_fsa = "K1C"
 crawl_fsa( one_fsa )
-with open( projectDir + '/data-raw/doctors-' + one_fsa + '.csv', 'w' ) as csv_file:
+with open( project_dir + '/data-raw/doctors-' + one_fsa + '.csv', 'w' ) as csv_file:
     writer = csv.writer(csv_file)
     for key, val in doctors.items():
         writer.writerow( [key, val] )
@@ -152,7 +152,7 @@ for j, city in enumerate(cities):
     print()
     print( city, j+1, "of", len(cities) )
 
-    with open( projectDir + '/data/' + city + '.pickle', 'rb') as f:
+    with open( project_dir + '/data/' + city + '.pickle', 'rb') as f:
         fsas = pickle.load(f)
 
     # progress bar settings
@@ -163,7 +163,7 @@ for j, city in enumerate(cities):
         doctors = {}
         progress(k, total, status= 'scraping ' + fsa )
 
-        with open( projectDir + '/data-raw/doctors-' + fsa + '.csv', 'w' ) as csv_file:
+        with open( project_dir + '/data-raw/doctors-' + fsa + '.csv', 'w' ) as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow( ['city_name', 'fsa', 'CPSO', 'article'] )
 
