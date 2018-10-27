@@ -15,7 +15,16 @@ absFilePath = os.path.abspath(__file__)
 fileDir = os.path.dirname(os.path.abspath(__file__))
 projectDir = os.path.dirname(fileDir)
 
+# progess bar
+def progress(count, total, status=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
 
+    percents = round(100.0 * count / float(total), 1)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status[0:40].ljust(40)))
+    sys.stdout.flush()
 
 def scrape_doctors(soup):
     for doctor in soup.find_all('article'):
@@ -80,10 +89,10 @@ def crawl_fsa( fsa ):
         time.sleep(randint(1,3))
         r = s.post( url_search, data = payload )
         soup = BeautifulSoup(r.content, 'html.parser')
-        print('new postal code in', city, 'scraping', fsa, soup.find('div', class_ = 'doctor-search-count').find('div', class_ = 'text-align--right').text)
 
         while True:
             # each search group lands on page 1, scrape it first
+            #print('new postal code in', city, 'scraping', fsa, soup.find('div', class_ = 'doctor-search-count').find('div', class_ = 'text-align--right').text)
             scrape_doctors(soup)
 
             # stop if there's no more pages
@@ -108,7 +117,7 @@ def crawl_fsa( fsa ):
                 time.sleep(randint(1,3))
                 r = s.post( url_paging, headers = headers_search.update(headers_paging), data = payload_paging )
                 soup = BeautifulSoup(r.content, 'html.parser')
-                print("scraping", fsa, soup.find('div', class_ = 'doctor-search-count').find('div', class_ = 'text-align--right').text)
+                #print("scraping", fsa, soup.find('div', class_ = 'doctor-search-count').find('div', class_ = 'text-align--right').text)
                 scrape_doctors(soup)
 
                 payload_paging['p$lt$ctl04$pageplaceholder$p$lt$ctl03$CPSO_DoctorSearchResults$hdnCurrentPage'] += 1
@@ -122,31 +131,52 @@ def crawl_fsa( fsa ):
             time.sleep(randint(1,3))
             r = s.post( url_paging, data = payload_paging )
             soup = BeautifulSoup(r.content, 'html.parser')
-            print("next group, scraping", fsa, soup.find('div', class_ = 'doctor-search-count').find('div', class_ = 'text-align--right').text)
+            #print("next group, scraping", fsa, soup.find('div', class_ = 'doctor-search-count').find('div', class_ = 'text-align--right').text)
 
-# scrape
+
+# scrape one fsa
+"""doctors = {}
+one_fsa = "K1C"
+crawl_fsa( one_fsa )
+with open( projectDir + '/data-raw/doctors-' + one_fsa + '.csv', 'w' ) as csv_file:
+    writer = csv.writer(csv_file)
+    for key, val in doctors.items():
+        writer.writerow( [key, val] )
+"""
+# scrape all cities
 cities = ['fsa_brampton', 'fsa_hamilton', 'fsa_london', 'fsa_mississauga', 'fsa_ottawa']
 
 start_time = time.time()
-for city in cities:
+
+for j, city in enumerate(cities):
+
+    print( city, j+1, "of", len(cities) )
 
     with open( projectDir + '/data/' + city + '.pickle', 'rb') as f:
         fsas = pickle.load(f)
 
-        for fsa in fsas:
-            doctors = {}
+    # progress bar settings
+    total = len(fsas) - 1
+    k = 0
+
+    for fsa in fsas:
+        doctors = {}
+        progress(k, total, status= 'scraping ' + fsa )
+
+        with open( projectDir + '/data-raw/doctors-' + fsa + '.csv', 'w' ) as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow( ['city_name', 'fsa', 'CPSO', 'article'] )
 
             try:
                 crawl_fsa( fsa )
-                with open( projectDir + '/data-raw/doctors-' + fsa + '.csv', 'w' ) as csv_file:
-                    writer = csv.writer(csv_file)
-                    for key, val in doctors.items():
-                        writer.writerow( [key, val] )
+                for key, val in doctors.items():
+                    writer.writerow( [city, fsa, key, val] )
             except:
-                print( "no doctors in", fsa )
-                with open( projectDir + '/data-raw/fail_doctors-' + fsa + '.csv', 'w' ) as csv_file:
-                    writer = csv.writer(csv_file)
-                    writer.writerow( ["", ""] )
+                #print( "no doctors in", fsa )
+                writer.writerow( [city, fsa, "NA", "NA"] )
+
+            finally:
+                k += 1
 
 elapsed_time = time.time() - start_time
 print(time.strftime("-- time elapsed for scrape: %H:%M:%S -- ", time.gmtime(elapsed_time)))
