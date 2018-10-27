@@ -129,5 +129,5 @@ for city_code, city in cities:
         writer.writerow( [ "city_code", "specialty_code", "num_doctors"] )
         for key, val in results.items():
             writer.writerow( [city_code, key, val] )
-            
+
     print()
