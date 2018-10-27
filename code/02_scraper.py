@@ -18,7 +18,7 @@ projectDir = os.path.dirname(fileDir)
 
 
 def scrape_doctors(soup):
-    for doctor in soup.find_all('article')[1:4]:
+    for doctor in soup.find_all('article'):
         doc_str = doctor.find('h3').text
         doctors[ (re.search("\d+", doc_str).group()) ] = doctor
 
