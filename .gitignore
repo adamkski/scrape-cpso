@@ -1,5 +1,7 @@
 # raw data
 data-raw/
+data-doctors/
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

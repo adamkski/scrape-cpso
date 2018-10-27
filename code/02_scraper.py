@@ -144,7 +144,8 @@ with open( project_dir + '/data-raw/doctors-' + one_fsa + '.csv', 'w' ) as csv_f
         writer.writerow( [key, val] )
 """
 # scrape big cities by fsa
-cities = ['fsa_brampton', 'fsa_hamilton', 'fsa_london', 'fsa_mississauga', 'fsa_ottawa', 'fsa_toronto']
+#cities = ['fsa_brampton', 'fsa_hamilton', 'fsa_london', 'fsa_mississauga', 'fsa_ottawa', 'fsa_toronto']
+cities = [ 'fsa_hamilton', 'fsa_london', 'fsa_ottawa', 'fsa_toronto']
 start_time = time.time()
 
 for j, city in enumerate(cities):

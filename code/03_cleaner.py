@@ -10,8 +10,27 @@ abs_file_path = os.path.abspath(__file__)
 file_dir = os.path.dirname(os.path.abspath(__file__))
 project_dir = os.path.dirname(file_dir)
 
+# progess bar
+def progress(count, total, status=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status[0:40].ljust(40)))
+    sys.stdout.flush()
+
+file_list = os.listdir(project_dir + "/data-raw")
+# progress bar settings
+total = len(file_list) - 1
+k = 0
+
 # get list of files to clean
-for file in os.listdir(project_dir + "/data-raw"):
+for file in file_list:
+
+    progress(k, total, status= 'cleaning... ' )
+    k += 1
 
     file = file.split('.')[0]
 
@@ -98,3 +117,6 @@ for file in os.listdir(project_dir + "/data-raw"):
     })
 
     clean.to_csv( project_dir + '/data-doctors/' + file + '.csv', index = False )
+
+progress(k, total, status= 'done!' )
+print()
