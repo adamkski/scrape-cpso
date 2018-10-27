@@ -33,6 +33,16 @@ manScript = manScript.replace( "%3d", "=" )
 manScript = manScript.replace( "%3a", ":" )
 manScript = manScript.replace( "en-CA", "en-US")
 
+def progress(count, total, status=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status[0:40].ljust(40)))
+    sys.stdout.flush()
+
 def ping_specialization( city, special ):
     with requests.Session() as s:
 
@@ -48,10 +58,10 @@ def ping_specialization( city, special ):
             "searchType":"general",
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$advancedState":"closed",
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$ConcernsState":"closed",
-    #            "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$txtPostalCode": fsa,
+            #"p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$txtPostalCode": fsa,
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$ddCity": city,
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$grpGender":"+",
-            #{}"p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$grpDocType":"rdoDocTypeAll",
+            #"p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$grpDocType":"rdoDocTypeAll",
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$grpDocType": "rdoDocTypeSpecialist",
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$ddSpecialist": special,
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$ddHospitalName":"-1",
@@ -71,10 +81,20 @@ def ping_specialization( city, special ):
         r = s.post(url_search, data = payload)
         soup = BeautifulSoup(r.content, 'html.parser')
         target = soup.find('div', class_ = "doctor-search-count").strong.text
-        results[ special ] = re.search( "\d+", target ).group()
+        return re.search( "\d+", target ).group()
 
 # list all specializations
 specs = {}
+results = {}
+cities = [
+    [1127, 'Brampton'],
+    [1425, 'Hamilton'],
+    [1561, "London"],
+    [1630, "Mississauga"],
+    [1711, "Ottawa"],
+    [1977, 'Toronto']
+ ]
+
 with requests.Session() as s:
     r = s.get(url_search)
     soup = BeautifulSoup(r.content, 'html.parser')
@@ -85,7 +105,27 @@ with requests.Session() as s:
     for option in options :
         specs[ option['value'] ] = option.text
 
-results = {}
-ping_specialization( 1977, 119 )
-ping_specialization( 1977, 151 )
-print(results)
+del specs['']
+
+# progress bar settings
+total = len(specs)
+i = 0
+
+for city_code, city in cities:
+
+    print( 'processing', city )
+    for key, val in specs.items():
+        progress(i, total, status= 'pinging ' + val )
+        i += 1
+        try:
+            results[ key ] = ping_specialization( city_code, key )
+            #print( 'found', results[ key ], 'doctors practicing', val )
+        except:
+            pass
+            #print( 'no doctors found' )
+
+    with open( projectDir + '/data/count-spec_mississauga.csv', 'w' ) as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow( [ "city_code", "specialty_code", "num_doctors"] )
+        for key, val in results.items():
+            writer.writerow( [city_code, key, val] )
