@@ -9,9 +9,9 @@ import sys
 import os
 
 url_search = "https://www.cpso.on.ca/Public-Information-Services/Find-a-Doctor?search=general"
-absFilePath = os.path.abspath(__file__)
-fileDir = os.path.dirname(os.path.abspath(__file__))
-projectDir = os.path.dirname(fileDir)
+abs_file_path = os.path.abspath(__file__)
+file_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.dirname(file_dir)
 
 headers_search = {
     "Host": "www.cpso.on.ca",
@@ -86,6 +86,7 @@ def ping_specialization( city, special ):
 # list all specializations
 specs = {}
 results = {}
+# for the big cities in Ontario
 cities = [
     [1127, 'Brampton'],
     [1425, 'Hamilton'],
@@ -108,24 +109,25 @@ with requests.Session() as s:
 del specs['']
 
 # progress bar settings
-total = len(specs)
-i = 0
-
+total = len(specs) - 1
 for city_code, city in cities:
 
+    i = 0
     print( 'processing', city )
+
     for key, val in specs.items():
         progress(i, total, status= 'pinging ' + val )
         i += 1
         try:
             results[ key ] = ping_specialization( city_code, key )
-            #print( 'found', results[ key ], 'doctors practicing', val )
-        except:
-            pass
-            #print( 'no doctors found' )
 
-    with open( projectDir + '/data/count-spec_mississauga.csv', 'w' ) as csv_file:
+        except:
+            results[ key ] = 0
+
+    with open( project_dir + '/data/count-spec_' + city + '.csv', 'w' ) as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow( [ "city_code", "specialty_code", "num_doctors"] )
         for key, val in results.items():
             writer.writerow( [city_code, key, val] )
+            
+    print()
