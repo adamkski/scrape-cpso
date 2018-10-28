@@ -97,13 +97,11 @@ def crawl_cpso( city_code = '', fsa = '', char = '' ):
         r = s.post( url_search, data = payload )
         soup = BeautifulSoup(r.content, 'html.parser')
         doctors.update( scrape_doctors(soup) )
-        k = 1
 
         while True:
             # stop if there's no pages
             try:
                 n_in_group = len(soup.find('div', class_ = "doctor-search-paging").find_all('a', id = re.compile("rptPages")))
-
             except:
                 break
 
@@ -124,9 +122,7 @@ def crawl_cpso( city_code = '', fsa = '', char = '' ):
                 r = s.post( url_paging, headers = headers_search.update(headers_paging), data = payload_paging )
                 soup = BeautifulSoup(r.content, 'html.parser')
 
-                page_num = soup.find('div', class_ = 'doctor-search-count').find('div', class_ = 'text-align--right').text.strip()
-                progress(k, n_in_group, status= f'scraping...{page_num}' )
-                k += 1
+                #page_num = soup.find('div', class_ = 'doctor-search-count').find('div', class_ = 'text-align--right').text.strip()
                 doctors.update( scrape_doctors(soup) )
 
                 payload_paging['p$lt$ctl04$pageplaceholder$p$lt$ctl03$CPSO_DoctorSearchResults$hdnCurrentPage'] += 1
