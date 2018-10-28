@@ -1,5 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
+from string import ascii_lowercase
 import re
 import time
 from random import randint
@@ -43,7 +45,7 @@ def progress(count, total, status=''):
     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status[0:40].ljust(40)))
     sys.stdout.flush()
 
-def count_doc_by_city( city ):
+def count_doc_by_city_lastname( city_code, char ):
     with requests.Session() as s:
 
         r = s.get(url_search)
@@ -58,7 +60,8 @@ def count_doc_by_city( city ):
             "searchType":"general",
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$advancedState":"closed",
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$ConcernsState":"closed",
-            "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$ddCity": city,
+            "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$ddCity": city_code,
+            "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$txtLastName": char,
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$grpGender":"+",
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$grpDocType":"rdoDocTypeAll",
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$ddHospitalName":"-1",
@@ -78,29 +81,7 @@ def count_doc_by_city( city ):
         r = s.post(url_search, data = payload)
         soup = BeautifulSoup(r.content, 'html.parser')
         target = soup.find('div', class_ = "doctor-search-count").strong.text
-        return re.search( "\d+", target ).group()
-
-"""# get all cities
-cities = {}
-with requests.Session() as s:
-    r = s.get(url_search)
-    soup = BeautifulSoup(r.content, 'html.parser')
-
-    # get list of all specializations
-    options = soup.find(id = 'p_lt_ctl04_pageplaceholder_p_lt_ctl02_AllDoctorsSearch_ddCity').find_all('option')
-
-    for option in options :
-        cities[ option['value'] ] = option.text
-
-del cities['']
-print( "found", len(cities), "cities")
-# save cities
-with open( project_dir + '/data/city_codes.csv', 'w' ) as csv_file:
-    writer = csv.writer(csv_file)
-    writer.writerow( [ "city_code", "city_name"] )
-    for key, val in cities.items():
-        writer.writerow( [key, val] )
-
+        return int(re.search( "\d+", target ).group())
 
 # for the big cities in Ontario (more than 1,000 doctors each)
 cities = {
@@ -111,28 +92,57 @@ cities = {
     "1711": "Ottawa",
     "1977": "Toronto"
  }
-"""
-cities = { "2067": "Windsor" }
 
-# progress bar settings
-total = len(cities)
-i = 0
+#cities = { "2067": "Windsor" }
+start_time = time.time()
 
-results = {}
 for city_code, city in cities.items():
+    city_idx = []
+    char_idx = []
+    count = []
 
-    progress(i, total, status= 'pinging ' + city )
-    i += 1
+    for char_1 in ascii_lowercase:
+        char = char_1
 
-    try:
-        results[ city_code ] = count_doc_by_city( city_code )
+        try:
+            n_dr = count_doc_by_city_lastname( city_code, char )
+            print( f"{city}-{char}: found {n_dr}")
 
-    except:
-        results[ city_code ] = 0
-progress(i, total, status= 'finished ' + city )
-print()
-with open( project_dir + '/data/count-doc-by-city.csv', 'w' ) as csv_file:
-    writer = csv.writer(csv_file)
-    writer.writerow( [ "city_code", "num_doctors"] )
-    for key, val in results.items():
-        writer.writerow( [key, val] )
+        except:
+            print( f"{city}-{char}: none found")
+            count.append( 'NA' )
+            continue
+
+        # if n results for one letter are below threshold, stop
+        if n_dr < 1000:
+            city_idx.append(city)
+            char_idx.append(char)
+            count.append( n_dr )
+            continue
+
+        # otherwise move to two letters
+        for char_2 in ascii_lowercase:
+            char = char_1 + char_2
+
+            try:
+                n_dr = count_doc_by_city_lastname( city_code, char )
+                print( f"{city}-{char}: found {n_dr}")
+            except:
+                count.append( 'NA' )
+                print( f"{city}-{char}: none found")
+                continue
+
+            city_idx.append(city)
+            char_idx.append(char)
+            count.append( n_dr )
+
+    result = pd.DataFrame({
+        "city_name": city_idx,
+        "char_idx": char_idx,
+        "count": count })
+
+    result.to_csv( f'{project_dir}/data/n_city_lname2_{city}.csv', index = False )
+
+elapsed_time = time.time() - start_time
+print( '-' * 10 )
+print(time.strftime("-- time elapsed for scrape: %H:%M:%S -- ", time.gmtime(elapsed_time)))

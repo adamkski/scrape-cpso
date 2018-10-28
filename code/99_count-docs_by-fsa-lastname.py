@@ -1,10 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
+from string import ascii_lowercase
+import pandas as pd
 import re
 import time
 from random import randint
 import pickle
-import csv
 import sys
 import os
 
@@ -43,12 +44,13 @@ def progress(count, total, status=''):
     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status[0:40].ljust(40)))
     sys.stdout.flush()
 
-def count_doc_by_city( city ):
+# return number of doctors found for an fsa
+def count_doc_by_fsa_char( fsa, char ):
     with requests.Session() as s:
 
+        # prepare payload
         r = s.get(url_search)
         soup = BeautifulSoup(r.content, 'html.parser')
-
         payload = {
             "__CMSCsrfToken": soup.find("input", id="__CMSCsrfToken")['value'],
             "__VIEWSTATE": soup.find("input", id="__VIEWSTATE")['value'],
@@ -58,7 +60,8 @@ def count_doc_by_city( city ):
             "searchType":"general",
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$advancedState":"closed",
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$ConcernsState":"closed",
-            "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$ddCity": city,
+            "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$txtPostalCode": fsa,
+            "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$txtLastName": char,
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$grpGender":"+",
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$grpDocType":"rdoDocTypeAll",
             "p$lt$ctl04$pageplaceholder$p$lt$ctl02$AllDoctorsSearch$ddHospitalName":"-1",
@@ -80,59 +83,45 @@ def count_doc_by_city( city ):
         target = soup.find('div', class_ = "doctor-search-count").strong.text
         return re.search( "\d+", target ).group()
 
-"""# get all cities
-cities = {}
-with requests.Session() as s:
-    r = s.get(url_search)
-    soup = BeautifulSoup(r.content, 'html.parser')
+# scrape an fsa for alphabet
+fsas = ['K1H', 'M5T', 'N6A']
+for fsa in fsas:
+    fsa_idx = []
+    char_idx = []
+    count = []
 
-    # get list of all specializations
-    options = soup.find(id = 'p_lt_ctl04_pageplaceholder_p_lt_ctl02_AllDoctorsSearch_ddCity').find_all('option')
+    # init progress bar
+    total = 26
+    i_fsa = 0
+    start_time = time.time()
 
-    for option in options :
-        cities[ option['value'] ] = option.text
+    for char in ascii_lowercase:
 
-del cities['']
-print( "found", len(cities), "cities")
-# save cities
-with open( project_dir + '/data/city_codes.csv', 'w' ) as csv_file:
-    writer = csv.writer(csv_file)
-    writer.writerow( [ "city_code", "city_name"] )
-    for key, val in cities.items():
-        writer.writerow( [key, val] )
+        progress(i_fsa, total, status= 'scraping ' + fsa + ' ' + char )
 
+        try:
+            fsa_idx.append(fsa)
+            char_idx.append(char)
+            count.append( count_doc_by_fsa_char( fsa, char ) )
 
-# for the big cities in Ontario (more than 1,000 doctors each)
-cities = {
-    "1127": "Brampton",
-    "1425": "Hamilton",
-    "1561": "London",
-    "1630": "Mississauga",
-    "1711": "Ottawa",
-    "1977": "Toronto"
- }
-"""
-cities = { "2067": "Windsor" }
+        except:
+            fsa_idx.append(fsa)
+            char_idx.append(char)
+            count.append( 'NA' )
 
-# progress bar settings
-total = len(cities)
-i = 0
+        finally:
+            i_fsa += 1
 
-results = {}
-for city_code, city in cities.items():
+    progress(i_fsa, total, status= 'finished ' + fsa )
+    print()
 
-    progress(i, total, status= 'pinging ' + city )
-    i += 1
+    fsa_result = pd.DataFrame({
+        "fsa_idx": fsa_idx,
+        "char_idx": char_idx,
+        "count": count })
 
-    try:
-        results[ city_code ] = count_doc_by_city( city_code )
+    fsa_result.to_csv( project_dir + '/data/' + 'count-doc_' + fsa + '-lastname.csv', index = False )
 
-    except:
-        results[ city_code ] = 0
-progress(i, total, status= 'finished ' + city )
+elapsed_time = time.time() - start_time
 print()
-with open( project_dir + '/data/count-doc-by-city.csv', 'w' ) as csv_file:
-    writer = csv.writer(csv_file)
-    writer.writerow( [ "city_code", "num_doctors"] )
-    for key, val in results.items():
-        writer.writerow( [key, val] )
+print(time.strftime("-- time elapsed for scrape: %H:%M:%S -- ", time.gmtime(elapsed_time)))

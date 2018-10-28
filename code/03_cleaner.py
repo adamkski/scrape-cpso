@@ -22,20 +22,25 @@ def progress(count, total, status=''):
     sys.stdout.flush()
 
 file_list = os.listdir(project_dir + "/data-raw")
+# process a shorter list
+#short_list = ['K1H', 'M5G', 'M5T', 'N6A']
+short_list = ['Perth']
+file_list = list( filter( lambda x: any(y in x for y in short_list), file_list) )
+print( f'cleaning short list... {file_list}')
 # progress bar settings
-total = len(file_list) - 1
+total = len(file_list)
 k = 0
 
 # get list of files to clean
 for file in file_list:
 
-    progress(k, total, status= 'cleaning... ' )
+    progress(k, total, status= f'cleaning...{file[-15:]}' )
     k += 1
 
     file = file.split('.')[0]
 
     city_name = []
-    fsa = []
+    #fsa = []
     CPSO_num = []
     first_name = []
     last_name = []
@@ -52,15 +57,19 @@ for file in file_list:
             CPSO_num.append( row['CPSO'])
             # metadata
             city_name.append( row['city_name'])
-            fsa.append( row['fsa'])
+            #fsa.append( row['fsa'])
 
             soup = BeautifulSoup( row['article'], 'html.parser')
 
             # name
-            raw_name = soup.find('h3').text
-            raw_name = raw_name[0:raw_name.find(' (')].split(', ')
-            first_name.append(raw_name[1])
-            last_name.append(raw_name[0])
+            try:
+                raw_name = soup.find('h3').text
+                raw_name = raw_name[0:raw_name.find(' (')].split(', ')
+                first_name.append(raw_name[1])
+                last_name.append(raw_name[0])
+            except:
+                first_name.append('')
+                last_name.append('')
 
             # contact details
             try:
@@ -106,7 +115,7 @@ for file in file_list:
 
     clean = pd.DataFrame( {
         "city_name": city_name,
-        "fsa": fsa,
+        #"fsa": fsa,
         "CPSO_num": CPSO_num,
         "first_name": first_name,
         "last_name": last_name,
