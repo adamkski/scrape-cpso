@@ -24,7 +24,8 @@ def progress(count, total, status=''):
 file_list = os.listdir(project_dir + "/data-raw")
 # process a shorter list
 #short_list = ['K1H', 'M5G', 'M5T', 'N6A']
-short_list = ['Perth']
+short_list = ['Brampton', 'Hamilton', "London", "Mississauga", "Ottawa", 'Toronto']
+
 file_list = list( filter( lambda x: any(y in x for y in short_list), file_list) )
 print( f'cleaning short list... {file_list}')
 # progress bar settings

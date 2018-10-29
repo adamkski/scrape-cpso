@@ -1,8 +1,16 @@
 from cpso import *
 import winsound
 
+# test cities < 1000 doctors
 #cities = { "2067": "Windsor" }
-cities = { "1739": "Perth" }
+#cities = { "1739": "Perth" }
+cities = {
+    "1127": 'Brampton',
+    "1425": 'Hamilton',
+    "1561": "London",
+    "1630": "Mississauga",
+    "1711": "Ottawa",
+    "1977": 'Toronto'}
 
 start_time = time.time()
 
@@ -33,6 +41,7 @@ for city_code, city in cities.items():
                 n_dr = count_doctors( city_code, '', char )
                 print( f"{city}-{char}: found {n_dr}")
                 one_city.update( crawl_cpso( city_code, '', char ) )
+
             except:
                 print( f"{city}-{char}: none found")
                 continue

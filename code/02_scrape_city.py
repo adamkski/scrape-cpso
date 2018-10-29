@@ -3,6 +3,7 @@ import winsound
 
 #cities = { "2067": "Windsor" }
 cities = { "1739": "Perth" }
+
 start_time = time.time()
 
 for city_code, city in cities.items():

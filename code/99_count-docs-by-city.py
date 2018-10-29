@@ -101,7 +101,7 @@ with open( project_dir + '/data/city_codes.csv', 'w' ) as csv_file:
     for key, val in cities.items():
         writer.writerow( [key, val] )
 
-
+"""
 # for the big cities in Ontario (more than 1,000 doctors each)
 cities = {
     "1127": "Brampton",
@@ -111,8 +111,8 @@ cities = {
     "1711": "Ottawa",
     "1977": "Toronto"
  }
-"""
-cities = { "2067": "Windsor" }
+
+#cities = { "2067": "Windsor" }
 
 # progress bar settings
 total = len(cities)
