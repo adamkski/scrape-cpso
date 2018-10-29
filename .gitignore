@@ -1,6 +1,7 @@
 # raw data
 data/
-data-raw/
+data-raw/*
+!data-raw/dr-*-lastname.csv
 data-doctors/*
 !data-doctors/dr-*-lastname.csv
 
