@@ -8,6 +8,7 @@ requests = "*"
 "bs4" = "*"
 pandas = "*"
 ipython = "*"
+lxml = "*"
 
 [dev-packages]
 
